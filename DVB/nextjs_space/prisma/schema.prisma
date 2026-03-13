@@ -1,0 +1,247 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  role          String    @default("admin")
+  bio           String?   @db.Text
+  expertise     String?
+  credentials   String?
+  jobTitle      String?
+  website       String?
+  twitterUrl    String?
+  linkedinUrl   String?
+  githubUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  posts         Post[]
+  pages         Page[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Post {
+  id              String    @id @default(cuid())
+  title           String
+  slug            String    @unique
+  content         String?   @db.Text
+  contentType     String    @default("richtext")
+  excerpt         String?   @db.Text
+  featuredImage   String?
+  featuredImageAlt String?
+  status          String    @default("draft")
+  publishedAt     DateTime?
+  scheduledAt     DateTime?
+  metaTitle       String?
+  metaDescription String?   @db.Text
+  metaRobots      String    @default("index, follow")
+  canonicalUrl    String?
+  ogImage         String?
+  focusKeyword    String?
+  schemaType      String    @default("BlogPosting")
+  wordCount       Int       @default(0)
+  readingTime     Int       @default(0)
+  authorId        String
+  author          User      @relation(fields: [authorId], references: [id])
+  categories      CategoriesOnPosts[]
+  tags            TagsOnPosts[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Page {
+  id              String    @id @default(cuid())
+  title           String
+  slug            String    @unique
+  content         String?   @db.Text
+  contentType     String    @default("richtext")
+  status          String    @default("draft")
+  publishedAt     DateTime?
+  template        String    @default("default")
+  parentId        String?
+  sortOrder       Int       @default(0)
+  metaTitle       String?
+  metaDescription String?   @db.Text
+  metaRobots      String    @default("index, follow")
+  canonicalUrl    String?
+  ogImage         String?
+  focusKeyword    String?
+  schemaType      String    @default("WebPage")
+  authorId        String
+  author          User      @relation(fields: [authorId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?   @db.Text
+  parentId    String?
+  posts       CategoriesOnPosts[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model CategoriesOnPosts {
+  postId     String
+  categoryId String
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([postId, categoryId])
+}
+
+model Tag {
+  id        String       @id @default(cuid())
+  name      String       @unique
+  slug      String       @unique
+  posts     TagsOnPosts[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model TagsOnPosts {
+  postId String
+  tagId  String
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
+
+model Media {
+  id          String   @id @default(cuid())
+  fileName    String
+  fileType    String
+  fileSize    Int
+  cloudPath   String
+  isPublic    Boolean  @default(true)
+  url         String?
+  altText     String?
+  caption     String?  @db.Text
+  width       Int?
+  height      Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Menu {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  location  String     @unique
+  items     MenuItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model MenuItem {
+  id        String   @id @default(cuid())
+  label     String
+  url       String
+  target    String   @default("_self")
+  parentId  String?
+  sortOrder Int      @default(0)
+  menuId    String
+  menu      Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SiteSettings {
+  id              String   @id @default(cuid())
+  siteName        String   @default("DVB Blog")
+  tagline         String   @default("A modern blog")
+  siteUrl         String   @default("")
+  logoUrl         String?
+  faviconUrl      String?
+  defaultMetaTitle String?
+  defaultMetaDesc  String?  @db.Text
+  permalinkStructure String @default("/{slug}")
+  socialTwitter   String?
+  socialFacebook  String?
+  socialLinkedin  String?
+  socialGithub    String?
+  orgName         String?
+  orgLogoUrl      String?
+  enableSidebar   Boolean  @default(true)
+  colorScheme     String   @default("indigo")
+  headerAdCode    String?  @db.Text
+  sidebarAdCode   String?  @db.Text
+  footerAdCode    String?  @db.Text
+  formCode        String?  @db.Text
+  robotsTxt       String?  @db.Text
+  customCss       String?  @db.Text
+  customHeadCode  String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model RedirectRule {
+  id        String   @id @default(cuid())
+  fromPath  String   @unique
+  toPath    String
+  type      Int      @default(301)
+  hits      Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NotFoundLog {
+  id        String   @id @default(cuid())
+  path      String
+  referer   String?
+  userAgent String?
+  count     Int      @default(1)
+  lastSeen  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@unique([path])
+}

@@ -1,0 +1,21 @@
+# ============================================================
+# DVB CMS - Development Dockerfile
+# For local development with hot-reloading
+# ============================================================
+FROM node:18-alpine
+
+RUN apk add --no-cache libc6-compat openssl
+
+WORKDIR /app
+
+COPY nextjs_space/package.json nextjs_space/yarn.lock* nextjs_space/package-lock.json* ./
+RUN npm install
+
+COPY nextjs_space/ .
+RUN npx prisma generate
+
+EXPOSE 3000
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+
+CMD ["npm", "run", "dev"]

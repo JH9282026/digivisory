@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+nextjs_space/node_modules/
+
+# Build
+nextjs_space/.next/
+nextjs_space/.build/
+
+# Environment
+.env
+!.env.example
+
+# Data
+backups/
+logs/
+uploads/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
